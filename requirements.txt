@@ -1,0 +1,12 @@
+requests
+flask
+flask-limiter
+google.generativeai
+moviepy
+Pillow
+urllib3
+lyricwikia
+apify_client
+pytube
+selenium
+rembg[gpu,cli]
