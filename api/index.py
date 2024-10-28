@@ -4,21 +4,14 @@ import google.generativeai as genai
 import os
 import subprocess
 import json
-from moviepy.editor import VideoFileClip, ImageSequenceClip
 from PIL import Image
 import urllib.request
 import time
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from functools import wraps
-import lyricwikia
-from apify_client import ApifyClient
-from pytube import YouTube, Search
-import cloudscraper
 genai.configure(api_key='AIzaSyDb27FVEnAlJkbZVP15lapXAig3Gf7NMeI')
 app = Flask(__name__)
-client = ApifyClient("apify_api_ak8ZWTTbhECGs8Til9gntYJhEH97WG1O3VFy")
-clodpler = cloudscraper.create_scraper()
 
 
 limiter = Limiter(
@@ -210,57 +203,7 @@ def process_removebg():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
-@app.route('/youtube', methods=['GET'])
-@rate_limit_with_ip_check()
-def process_youtube():
-    url = request.args.get('url')
-    query = request.args.get('query')
-    if url and query:
-        return jsonify({'error': 'Error need 1 parameter, but 2 was given'}), 400
-    elif not url:
-        return jsonify({'error': 'Missing url parameter'}), 400
-    elif not query:
-        return jsonify({'error': 'Missing url parameter'}), 400
-    elif url:
-        yt = YouTube(url)
-        #ytube_download = ytube.download()
-        print(yt.title)
-    elif query:
-        search = Search(query)
-        list_url = []
-        for url in search.results:
-            list_url.append(url.watch_url)
-        return jsonify({'status':True, 'creator': '@Miyan', 'data': list_url}), 200
-    try:
-        return jsonify({'status':True, 'creator': '@Miyan'}), 200
 
-    except requests.RequestException as e:
-        return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    except (IndexError, KeyError) as e:
-        return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-@app.route('/lyrics', methods=['GET'])
-@rate_limit_with_ip_check()
-def process_lyrics():
-    artistName = request.args.get('artistName')
-    songName = request.args.get('songName')
-    if not artistName:
-        return jsonify({'error': 'Missing artistName parameter'}), 400
-    if not songName:
-        return jsonify({'error': 'Missing songName parameter'}), 400
-    try:
-        lyrics = lyricwikia.get_lyrics(artistName, songName)
-        print(lyrics)
-        return jsonify({'status':True, 'creator': '@Miyan', 'lyrics': lyrics}), 200
-
-    except requests.RequestException as e:
-        return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    except (IndexError, KeyError) as e:
-        return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/tiktoksearch', methods=['GET'])
 @rate_limit_with_ip_check()
