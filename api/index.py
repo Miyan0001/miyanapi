@@ -1,4 +1,5 @@
 from flask import *
+from PIL import Image
 import requests
 import google.generativeai as genai
 import os
