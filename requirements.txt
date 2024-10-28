@@ -8,5 +8,4 @@ urllib3
 lyricwikia
 apify_client
 pytube
-selenium
 rembg[gpu,cli]
