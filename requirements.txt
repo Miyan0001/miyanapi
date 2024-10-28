@@ -1,7 +1,3 @@
 requests
 flask
-flask-limiter
 google.generativeai
-Pillow
-urllib3
-rembg[gpu,cli]
