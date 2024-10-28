@@ -20,6 +20,7 @@ app = Flask(__name__)
 client = ApifyClient("apify_api_ak8ZWTTbhECGs8Til9gntYJhEH97WG1O3VFy")
 clodpler = cloudscraper.create_scraper()
 
+
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
