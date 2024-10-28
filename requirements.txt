@@ -2,4 +2,3 @@ requests
 flask
 google.generativeai
 Pillow
-rembg[gpu,cli]
