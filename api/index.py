@@ -14,7 +14,7 @@ app = Flask(__name__)
 def process_home():
     return render_template('index.html'), 200
 
-@app.route('/duck-ai', methods=['GET'])
+@app.route('/gpt', methods=['GET'])
 def process_duck_ai():
     text = request.args.get('text')
     if not text:
@@ -77,21 +77,6 @@ def process_duck_ai():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
-@app.route('/gpt', methods=['GET'])
-def process_gpt():
-    text = request.args.get('text')
-    if not text:
-        return jsonify({'error': 'Missing text parameter'}), 400
-    try:
-        response = requests.get(f'https://api.vihangayt.com/ai/gpt?q={text}')
-        return jsonify({'status':True, 'creator': '@Miyan', 'result': response.json().get('data')}), 200
-
-    except requests.RequestException as e:
-        return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    except (IndexError, KeyError) as e:
-        return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/gemini', methods=['GET'])
 def process_gemini():
