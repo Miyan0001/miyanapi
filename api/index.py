@@ -6,14 +6,16 @@ import os
 import subprocess
 import json
 import time
+import cloudscraper
+from datetime import datetime
 genai.configure(api_key='AIzaSyDb27FVEnAlJkbZVP15lapXAig3Gf7NMeI')
 app = Flask(__name__)
-
+scraper = cloudscraper.create_scraper()
 
 
 @app.route('/')
 def process_home():
-    return render_template('index.html'), 200
+    return "Hello, World", 200
 
 @app.route('/gpt', methods=['GET'])
 def process_duck_ai():
@@ -136,68 +138,6 @@ def process_gemini_media():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
-@app.route('/removebg', methods=['GET'])
-def process_removebg():
-    file_url = request.args.get('file_url')
-    if not file_url:
-        return jsonify({'error': 'Missing file_url parameter'}), 400
-    response = requests.get(file_url)
-    filename = os.path.basename(file_url)
-    with open(filename, 'wb') as gm:
-        gm.write(response.content)
-    try:
-        subprocess.run(['rm', '-rf', f'removebg-{filename}'], check=True)
-        subprocess.run(['rembg', 'i', filename, f'removebg-{filename}'], check=True)
-        return send_file(f'removebg-{filename}',mimetype='image/png',download_name='Miyan.png'), 200
-
-    except requests.RequestException as e:
-        return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    except (IndexError, KeyError) as e:
-        return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-
-
-# @app.route('/tiktoksearch', methods=['GET'])
-# def process_tiktoksearch():
-    # keyword = request.args.get('keyword')
-    # if not keyword:
-        # return jsonify({'error': 'Missing keyword parameter'}), 400
-    # try:
-        # run_input = {
-            # "keyword": keyword,
-            # "limit": 10,
-            # "sortType": None,
-            # "region": "",
-            # "publishTime": "ALL_TIME",
-            # "proxyConfiguration": { "useApifyProxy": True },}
-        
-        # run = client.actor("jQfZ1h9FrcWcliKZX").call(run_input=run_input)
-        # return jsonify({'status':True, 'creator': '@Miyan', 'data': run}), 200
-
-    # except requests.RequestException as e:
-        # return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    # except (IndexError, KeyError) as e:
-        # return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    # except Exception as e:
-        # return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-# @app.route('/cloudflare', methods=['GET'])
-# def process_bypass_cloudflare():
-    # url = request.args.get('url') 
-    # if not url:
-        # return jsonify({'error': 'Missing keyword parameter'}), 400
-    # try:
-        # bypass_cloudflare = clodpler.get(url).text
-        # return jsonify({'status':True, 'creator': '@Miyan', 'data': bypass_cloudflare}), 200
-
-    # except requests.RequestException as e:
-        # return jsonify({'error': f'API request failed: {str(e)}'}), 500
-    # except (IndexError, KeyError) as e:
-        # return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
-    # except Exception as e:
-        # return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/image-enhancer', methods=['GET'])
 def process_image_enhancer():
@@ -247,6 +187,105 @@ def process_image_enhancer():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
+@app.route('/cloudflare', methods=['GET'])
+def cloudflare_route():
+    url = request.args.get('url')
+    if not url:
+        return "Where's the url parameter?", 500
+    bypass_cloudflare = scraper.get(url).text
+    return bypass_cloudflare, 200
+    
 
-# if __name__ == '__main__':
-    # app.run(debug=True, host=0.0.0.0)
+def format_number(integer):
+    return "{:,}".format(int(integer)).replace(",", ".")
+
+def format_date(timestamp, locale='en'):
+    return datetime.fromtimestamp(timestamp).strftime('%A, %d %B %Y, %H:%M:%S')
+
+@app.route('/tiktok', methods=['GET'])
+def tiktok_dl():
+    url = request.args.get('url')
+    if not url:
+        return "url parameter is missing", 500
+    domain = 'https://www.tikwm.com/api/'
+    headers = {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Origin': 'https://www.tikwm.com',
+        'Referer': 'https://www.tikwm.com/',
+        'Sec-Ch-Ua': '"Not)A;Brand" ;v="24" , "Chromium" ;v="116"',
+        'Sec-Ch-Ua-Mobile': '?1',
+        'Sec-Ch-Ua-Platform': 'Android',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+    params = {
+        'url': url,
+        'count': 12,
+        'cursor': 0,
+        'web': 1,
+        'hd': 1
+    }
+
+    try:
+        response = requests.post(domain, headers=headers, params=params).json()
+        data = []
+
+        if not response['data']['size']:
+            for image in response['data']['images']:
+                data.append({'type': 'photo', 'url': image})
+        else:
+            data.append({
+                'type': 'watermark',
+                'url': 'https://www.tikwm.com' + response['data']['wmplay']
+            })
+            data.append({
+                'type': 'nowatermark',
+                'url': 'https://www.tikwm.com' + response['data']['play']
+            })
+            data.append({
+                'type': 'nowatermark_hd',
+                'url': 'https://www.tikwm.com' + response['data']['hdplay']
+            })
+
+        result = {
+            'status': True,
+            'title': response['data']['title'],
+            'taken_at': format_date(response['data']['create_time']).replace('1970', ''),
+            'region': response['data']['region'],
+            'id': response['data']['id'],
+            'durations': response['data']['duration'],
+            'duration': f"{response['data']['duration']} Seconds",
+            'cover': 'https://www.tikwm.com' + response['data']['cover'],
+            'size_wm': response['data']['wm_size'],
+            'size_nowm': response['data']['size'],
+            'size_nowm_hd': response['data']['hd_size'],
+            'data': data,
+            'music_info': {
+                'id': response['data']['music_info']['id'],
+                'title': response['data']['music_info']['title'],
+                'author': response['data']['music_info']['author'],
+                'album': response['data']['music_info']['album'] or None,
+                'url': 'https://www.tikwm.com' + (response['data']['music'] or response['data']['music_info']['play'])
+            },
+            'stats': {
+                'views': format_number(response['data']['play_count']),
+                'likes': format_number(response['data']['digg_count']),
+                'comment': format_number(response['data']['comment_count']),
+                'share': format_number(response['data']['share_count']),
+                'download': format_number(response['data']['download_count'])
+            },
+            'author': {
+                'id': response['data']['author']['id'],
+                'fullname': response['data']['author']['unique_id'],
+                'nickname': response['data']['author']['nickname'],
+                'avatar': 'https://www.tikwm.com' + response['data']['author']['avatar']
+            }
+        }
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
