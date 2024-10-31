@@ -11,7 +11,19 @@ from datetime import datetime
 genai.configure(api_key='AIzaSyDb27FVEnAlJkbZVP15lapXAig3Gf7NMeI')
 app = Flask(__name__)
 scraper = cloudscraper.create_scraper()
+import base64
 
+# Use this function to convert an image file from the filesystem to base64
+def image_file_to_base64(image_path):
+    with open(image_path, 'rb') as f:
+        image_data = f.read()
+    return base64.b64encode(image_data).decode('utf-8')
+
+# Use this function to fetch an image from a URL and convert it to base64
+def image_url_to_base64(image_url):
+    response = requests.get(image_url)
+    image_data = response.content
+    return base64.b64encode(image_data).decode('utf-8')
 
 @app.route('/')
 def process_home():
@@ -179,6 +191,37 @@ def process_image_enhancer():
 
         find_values(result)
         return jsonify({'status':True, 'creator': '@Miyan', 'url': values[1]}), 200
+
+    except requests.RequestException as e:
+        return jsonify({'error': f'API request failed: {str(e)}'}), 500
+    except (IndexError, KeyError) as e:
+        return jsonify({'error': f'Failed to process response: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+@app.route('/esrgan', methods=['GET'])
+def process_esrgan():
+    image_url = request.args.get('url')
+    
+    if not image_url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+    
+    try:
+        api_key = "SG_23213d820f216a76"
+        url = "https://api.segmind.com/v1/esrgan"
+
+# Request payload
+        data = {
+          "image": image_url_to_base64(image_url),  # Or use image_file_to_base64("IMAGE_PATH")
+          "scale": 4
+        }
+
+        headers = {'x-api-key': api_key}
+
+        response = requests.post(url, json=data, headers=headers)
+        with open('enhanced.jpg','wb') as f:
+            f.write(response.content)
+        return send_file('enhanced.jpg'), 200
 
     except requests.RequestException as e:
         return jsonify({'error': f'API request failed: {str(e)}'}), 500
