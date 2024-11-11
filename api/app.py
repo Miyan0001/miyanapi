@@ -1,15 +1,14 @@
-from flask import Flask, request, Response
+from flask import Flask,request,redirect,Response
 import requests
 
 app = Flask(__name__)
-TARGET_URL = 'https://crucial-renewing-sparrow.ngrok-free.app'
+SITE_NAME = 'https://crucial-renewing-sparrow.ngrok-free.app'
 
-def proxy_request(path):
-    url = f"{TARGET_URL}/{path}"
-    response = requests.get(url, params=request.args, headers={key: value for key, value in request.headers if key != 'Host'})
-    return Response(response.content, status=response.status_code, headers=dict(response.headers))
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    return proxy_request(path)
+@app.route('/<path:path>',methods=['GET'])
+def proxy(path):
+    if request.method=='GET':
+        resp = requests.get(f'{SITE_NAME}{path}')
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in     resp.raw.headers.items() if name.lower() not in excluded_headers]
+        response = Response(resp.content, resp.status_code, headers)
+    return response
